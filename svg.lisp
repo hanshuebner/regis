@@ -85,3 +85,13 @@
              (dolist (point points)
                (format t "[~A,~A]" (car point) (cdr point))))
     (terpri)))
+
+(defun get-svg-path (svg-pathname)
+  (let* ((doc (cxml:parse (alexandria:read-file-into-string svg-pathname) (stp:make-builder)))
+         (node-set (xpath:with-namespaces (("" "http://www.w3.org/2000/svg"))
+                     (xpath:evaluate "/svg//path/@d" doc))))
+    (assert (= (length (xpath:all-nodes node-set)) 1) ()  "input SVG needs to have exactly one path")
+    (stp:value (xpath:first-node node-set))))
+
+(defun svg-to-regis (svg-pathname &key (width 760) (y-offset 0))
+  (commands-to-regis (path-to-commands (get-svg-path svg-pathname) width y-offset)))

@@ -1,7 +1,9 @@
 ;; -*- Lisp -*-
 
 (defpackage :regis
-  (:use :cl :alexandria))
+  (:use :cl :alexandria)
+  (:export #:start-server
+           #:with-regis))
 
 (in-package :regis)
 
@@ -51,7 +53,7 @@
          (progn ,@body)
        (force-output))))
 
-(defmacro with-regis (() &body body)
+(defmacro with-regis ((&optional (stream *standard-output*)) &body body)
   `(with-output-to-terminal ()
      (format t "~C[?4l" #\Escape)
      (format t "~Cc" #\Control-Sequence-Introducer)
@@ -64,6 +66,6 @@ W(I7 P1 M2 A0 N0 S0)
 T(A0 I0 D0 S1)
 ")
      (prog1
-         (write-string (progn ,@body))
-       (format t "~C!" #\Control-Sequence-Introducer)
-       (format t "~C[H" #\Escape))))
+         (write-string (progn ,@body) stream)
+       (format stream "~C!" #\Control-Sequence-Introducer)
+       (format stream "~C[H" #\Escape))))

@@ -2,4 +2,8 @@
   :depends-on ("usocket"
                "alexandria"
                "bordeaux-threads"
-               "cl-ppcre"))
+               "cl-ppcre"
+               "xpath"
+               "cxml-stp")
+  :components ((:file "regis")
+               (:file "svg")))
