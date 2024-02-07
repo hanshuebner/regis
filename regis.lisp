@@ -107,8 +107,6 @@
      (format t "~C[?4l" #\Escape)
      (format t "~C[H" #\Escape)
      (format t "~C[2J" #\Escape)
-     (force-output t)
-     (sleep 1)
      (format t "~CPp" #\Escape)
      (write-string "
 ;S(I0 N0 A)
@@ -119,4 +117,5 @@ P[0,0]
      (prog1
          (progn ,@body)
        (format t "~C!" #\Control-Sequence-Introducer)
-       (format t "~C[H" #\Escape))))
+       (format t "~C[H" #\Escape)
+       (force-output))))
