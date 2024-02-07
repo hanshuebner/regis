@@ -36,35 +36,37 @@
 (defun stop-server ()
   (when *server-thread*
     (handler-case
-        (bordeaux-threads-2:signal-in-thread *server-thread* 'exit-accept-loop)
+        (bt2:signal-in-thread *server-thread* 'exit-accept-loop)
       (error (e)
         (format *error-output* "~&; could not stop server: ~A" e)))))
 
 (defun start-server ()
   (stop-server)
-  (setf *server-thread* (bordeaux-threads-2:make-thread 'accept-connections-loop
-                                                        :name (format nil "REGIS listener on port ~A" *port*))))
+  (setf *server-thread* (bt2:make-thread 'accept-connections-loop
+                                         :name (format nil "REGIS listener on port ~A" *port*))))
 
 
 
-(defmacro with-output-to-terminal (() &body body)
-  `(let ((*standard-output* (usocket:socket-stream *terminal-socket*)))
+(defmacro with-output-to-terminal ((stream) &body body)
+  `(let ((,stream (usocket:socket-stream *terminal-socket*)))
      (prog1
          (progn ,@body)
-       (force-output))))
+       (force-output ,stream))))
 
-(defmacro with-regis ((&optional (stream *standard-output*)) &body body)
-  `(with-output-to-terminal ()
-     (format t "~C[?4l" #\Escape)
-     (format t "~Cc" #\Control-Sequence-Introducer)
-     (force-output)
+(defmacro with-regis ((&optional (stream '*standard-output*)) &body body)
+  `(with-output-to-terminal (,stream)
+     (format ,stream "~C[?4l" #\Escape)
+     (format ,stream "~C[H" #\Escape)
+     (format ,stream "~C[2J" #\Escape)
+     (force-output ,stream)
      (sleep 1)
-     (format t "~CPp" #\Escape)
+     (format ,stream "~CPp" #\Escape)
      (write-string "
-s(E I0)
-W(I7 P1 M2 A0 N0 S0)
-T(A0 I0 D0 S1)
-")
+;S(I0 N0 A)
+W(V I7 A0 S0 M1 N0 P1 M2)
+T(I0 A0 D0 S1)
+P[0,0]
+" ,stream)
      (prog1
          (progn ,@body)
        (format t "~C!" #\Control-Sequence-Introducer)
