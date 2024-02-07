@@ -88,19 +88,16 @@
   (setf *server-thread* (bt2:make-thread 'accept-connections-loop
                                          :name (format nil "REGIS listener on port ~A" *port*))))
 
-
+(defun write-to-terminal (string)
+  (bt2:interrupt-thread *connection-handler*
+                        (lambda ()
+                          (paced-write-string string *connection-stream*))))
 
 (defmacro with-output-to-terminal (() &body body)
   `(with-output-to-string (*standard-output*)
      (prog1
          (progn ,@body)
-       (handler-case
-           (let ((string (get-output-stream-string *standard-output*)))
-             (bt2:interrupt-thread *connection-handler*
-                                   (lambda ()
-                                     (paced-write-string string *connection-stream*))))
-         (error (e)
-           (format *trace-output* "~&; error sending data to terminal: ~A~%" e))))))
+       (write-to-terminal (get-output-stream-string *standard-output*)))))
 
 (defmacro with-regis (() &body body)
   `(with-output-to-terminal ()
