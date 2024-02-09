@@ -1,7 +1,8 @@
 ;; -*- Lisp -*-
 
 (defpackage :svg
-  (:use :cl :alexandria))
+  (:use :cl :alexandria)
+  (:export #:svg-to-regis))
 
 (in-package :svg)
 
@@ -9,7 +10,7 @@
   (ppcre:split "\\s*(?=[a-zA-Z])" path))
 
 (defun parse-command (command)
-  (with-input-from-string (in command)
+  (with-input-from-string (in (ppcre:regex-replace-all "," command " "))
     (list (read-char in)
           (loop for x = (read in nil)
                 for y = (read in nil)
@@ -53,6 +54,11 @@
                    y (cdar coordinates))
              (track-extremes)
              (push `(:move (,x . ,y)) result))
+            (#\m
+             (incf x (caar coordinates))
+             (incf y (cdar coordinates))
+             (track-extremes)
+             (push `(:move (,x . ,y)) result))
             (#\L
              (push `(:line ,@(mapcar (lambda (coordinate)
                                        (destructuring-bind (ax . ay) coordinate
@@ -62,6 +68,22 @@
                                          (cons ax ay)))
                                      coordinates))
                    result))
+            (#\V
+             (setf y (caar coordinates))
+             (track-extremes)
+             (push `(:line (,x . ,y)) result))
+            (#\v
+             (incf y (caar coordinates))
+             (track-extremes)
+             (push `(:line (,x . ,y)) result))
+            (#\H
+             (setf x (caar coordinates))
+             (track-extremes)
+             (push `(:line (,x . ,y)) result))
+            (#\h
+             (incf x (caar coordinates))
+             (track-extremes)
+             (push `(:line (,x . ,y)) result))
             ((#\l #\c)
              (push `(:line ,@(mapcar (lambda (coordinate)
                                        (destructuring-bind (dx . dy) coordinate
